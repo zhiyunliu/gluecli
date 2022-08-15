@@ -1,12 +1,10 @@
 package indextype
 
-type DbIndexType string
-
 const (
 	//主键
-	PK DbIndexType = "pk"
+	PK string = "pk"
 	//唯一
-	Unq DbIndexType = "unq"
+	Unq string = "unq"
 	//普通
-	Idx DbIndexType = "idx"
+	Idx string = "idx"
 )

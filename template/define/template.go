@@ -13,7 +13,7 @@ var (
 type Template interface {
 	Name() string
 	ReadPath(filePath string) (list *model.TmplTableList, err error)
-	Translate(input interface{}) (string, error)
+	Translate(dbType string, input interface{}) (string, error)
 }
 
 func Load(name string) Template {

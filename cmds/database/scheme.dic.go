@@ -51,7 +51,7 @@ func dicScheme(c *cli.Context, opts *schemeDicOptions) (err error) {
 	content := ""
 	for _, tb := range dbInfo.Tables {
 		//翻译文件
-		ct, err := template.Translate(opts.TmplType, tb)
+		ct, err := template.Translate(opts.TmplType, opts.DbType, tb)
 		if err != nil {
 			return err
 		}

@@ -41,8 +41,8 @@ func (m *markdown) ReadPath(filePath string) (list *model.TmplTableList, err err
 	return totalTableList, nil
 }
 
-func (m *markdown) Translate(input interface{}) (string, error) {
-	var tmpl = template.New("table").Funcs(getfuncs(tp))
+func (m *markdown) Translate(dbType string, input interface{}) (string, error) {
+	var tmpl = template.New("table").Funcs(getfuncs(dbType))
 	np, err := tmpl.Parse(TmplDictionary)
 	if err != nil {
 		return "", err

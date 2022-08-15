@@ -27,13 +27,13 @@ func ReadPath(filePath string) (tbList *model.TmplTableList, err error) {
 	return tmpl.ReadPath(filePath)
 }
 
-func Translate(tmpl string, input interface{}) (content string, err error) {
+func Translate(tmpl string, dbType string, input interface{}) (content string, err error) {
 	impl := define.Load(tmpl)
 	if impl == nil {
 		err = fmt.Errorf("未注册类型:%s", tmpl)
 		return
 	}
-	return impl.Translate(input)
+	return impl.Translate(dbType, input)
 }
 
 func getProviderName(filePath string) string {
