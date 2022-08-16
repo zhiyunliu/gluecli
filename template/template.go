@@ -3,10 +3,19 @@ package template
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/zhiyunliu/gluecli/model"
 	"github.com/zhiyunliu/gluecli/template/define"
 	_ "github.com/zhiyunliu/gluecli/template/markdown"
+)
+
+var (
+	tmplMap = map[string]string{
+		"md":   "markdown",
+		"doc":  "word",
+		"docx": "word",
+	}
 )
 
 func ReadPath(filePath string) (tbList *model.TmplTableList, err error) {
@@ -37,5 +46,9 @@ func Translate(tmpl string, dbType string, input interface{}) (content string, e
 }
 
 func getProviderName(filePath string) string {
-	return filepath.Ext(filePath)
+	orgVal := strings.Trim(filepath.Ext(filePath), ".")
+	if newVal, ok := tmplMap[orgVal]; ok {
+		return newVal
+	}
+	return orgVal
 }

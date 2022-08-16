@@ -31,7 +31,7 @@ func buildSchemeCreateCmd() cli.Command {
 		},
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "file,f", Destination: &opts.MdFilePath, Usage: `-md文件`},
-			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},
+			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Value: ".", Usage: `-输出路径`},
 			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "table,t", Destination: &opts.TableName, Usage: `-表名称`},
 			cli.BoolFlag{Name: "drop,d", Destination: &opts.IncludeDrop, Usage: `-包含表删除语句`},
@@ -43,11 +43,13 @@ func buildSchemeCreateCmd() cli.Command {
 }
 
 func createScheme(c *cli.Context, opts *schemeCreateOptions) (err error) {
-	if len(c.Args()) == 0 {
-		return fmt.Errorf("未指定markdown文件")
+	if opts.MdFilePath == "" {
+		err = fmt.Errorf("请指定输入文档")
+		return
 	}
-	if len(c.Args()) < 2 {
-		return fmt.Errorf("未指定输出路径")
+	if opts.DbType == "" {
+		err = fmt.Errorf("请指定数据库类型")
+		return
 	}
 
 	var tblist *model.TmplTableList

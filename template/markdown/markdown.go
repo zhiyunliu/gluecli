@@ -10,6 +10,10 @@ import (
 	"github.com/zhiyunliu/gluecli/template/define"
 )
 
+const (
+	Template = "markdown"
+)
+
 func init() {
 	define.Registry(&markdown{})
 }

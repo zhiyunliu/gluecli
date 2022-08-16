@@ -2,7 +2,7 @@ package mssql
 
 import (
 	"fmt"
-	"strconv"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -12,6 +12,8 @@ import (
 	"github.com/zhiyunliu/golibs/xtransform"
 	"github.com/zhiyunliu/golibs/xtypes"
 )
+
+type ColTypeCallback func(*model.TmplCol) string
 
 var (
 	funcMap = template.FuncMap{}
@@ -32,8 +34,27 @@ var (
 		"now()":             "getdate()",
 	}
 
-	colTypeMap = xtypes.XMap{
-		"varchar2": "varchar",
+	colTypeMap = map[string]string{
+		`^varchar\(\d+\)$`:        "varchar(*)",
+		`^varchar2\((\d+)\)$`:     "varchar(*)",
+		`^nvarchar2\(\d+\)$`:      "nvarchar(*)",
+		`^date$`:                  "datetime",
+		`^datetime$`:              "datetime",
+		`^timestamp$`:             "datetime",
+		`^decimal$`:               "decimal",
+		`^float$`:                 "float",
+		`^int$`:                   "int",
+		`^number\([1-2]{1}\)$`:    "tinyint",
+		`^number\([3-9]{1}\)$`:    "int",
+		`^number\(10\)$`:          "int",
+		`^number\(1[1-9]{1}\)$`:   "bigint",
+		`^number\(2[0-9]{1}\)$`:   "bigint",
+		`^number\((\d+),(\d+)\)$`: "decimal(*)",
+		`^varchar\((\d+)\)$`:      "varchar(*)",
+		`^string$`:                "tinytext",
+		`^text$`:                  "text",
+		`^longtext$`:              "text",
+		`^clob$`:                  "text",
 	}
 )
 
@@ -44,23 +65,22 @@ func init() {
 
 	funcMap["dbcolType"] = func(col *model.TmplCol) string {
 		colType := strings.ToLower(col.ColType)
-		v := colTypeMap.GetString(colType)
-		if v == "" {
-			v = colType
+		colType = strings.TrimSpace(colType)
+		for regx, v := range colTypeMap {
+			reg := regexp.MustCompile(regx)
+			if reg.MatchString(colType) {
+				if !strings.Contains(v, "*") {
+					return v
+				}
+				value := reg.FindStringSubmatch(colType)
+				fmt.Printf("%s:%s[%s]\n", col.ColName, colType, strings.Join(value, "|"))
+				if len(value) > 1 {
+					return strings.Replace(v, "*", strings.Join(value[1:], ","), -1)
+				}
+				return v
+			}
 		}
-		partList := []string{}
-		if col.ColLen != 0 {
-			partList = append(partList, strconv.Itoa(col.ColLen))
-		}
-		if col.DecimalLen != 0 {
-			partList = append(partList, strconv.Itoa(col.DecimalLen))
-		}
-		partVal := ""
-		if len(partList) > 0 {
-			partVal = strings.Join(partList, ",")
-			partVal = "(" + partVal + ")"
-		}
-		return colType + partVal
+		return colType
 	}
 
 	funcMap["defaultValue"] = func(col *model.TmplCol) string {
@@ -69,8 +89,20 @@ func init() {
 		if strings.EqualFold(col.Default, "") {
 			return ""
 		}
-		col.Default = strings.ToLower(col.Default)
-		return defaultMap.GetString(col.Default)
+		newVal := defaultMap.GetString(col.Default)
+		if newVal == "" {
+			newVal = col.Default
+		}
+
+		switch col.ColType {
+		case "varchar":
+			fallthrough
+		case "nvarchar":
+			newVal = fmt.Sprintf("'%s'", newVal)
+		default:
+		}
+
+		return fmt.Sprintf(" default %s", newVal)
 	}
 
 	funcMap["isNull"] = func(col *model.TmplCol) string {
@@ -79,12 +111,16 @@ func init() {
 
 	funcMap["generatePK"] = func(tbl *model.TmplTable) string {
 		tmpl := `
-		CONSTRAINT @{Name} PRIMARY KEY CLUSTERED 
-		(
-			@{PkCols}
-		) `
+CONSTRAINT @{Name} PRIMARY KEY CLUSTERED 
+(
+	@{PkCols}
+) 
+`
 
 		pks := tbl.GetPks()
+		if pks == nil {
+			panic(fmt.Errorf("【%s】未设置PK", tbl.Name))
+		}
 
 		pkslist := []string{}
 
@@ -101,15 +137,16 @@ func init() {
 	}
 
 	funcMap["generateIdx"] = func(tbl *model.TmplTable) string {
-		idxtmpl := `
-		CREATE @{UNIQUE} NONCLUSTERED INDEX @{idx_name} ON @{table_name}( @{idx_cols} )
-		`
+		idxtmpl := `CREATE @{UNIQUE} NONCLUSTERED INDEX @{idx_name} ON @{table_name}( @{idx_cols} )	`
 
 		idxs := tbl.GetIdxs()
 
 		list := []string{}
 
 		for k, v := range idxs.Map {
+			if strings.EqualFold(v.IdxType, indextype.PK) {
+				continue
+			}
 			param := map[string]interface{}{
 				"idx_name":   k,
 				"table_name": tbl.Name,
@@ -130,15 +167,11 @@ func init() {
 	}
 
 	funcMap["generateComment"] = func(tbl *model.TmplTable) string {
-		tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'@{Comment}' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'@{TableName}', @level2type=N'COLUMN',@level2name=N'@{ColName}'`
+		tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
 		list := []string{}
 		for _, col := range tbl.Cols.Cols {
-			param := map[string]interface{}{
-				"Comment":   col.Comment,
-				"TableName": tbl.Name,
-				"ColName":   col.ColName,
-			}
-			list = append(list, xtransform.Translate(tmpl, param))
+			r := fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
+			list = append(list, r)
 		}
 		return strings.Join(list, "\r\n")
 	}

@@ -32,6 +32,7 @@ func NewTmplTable(name, desc, extinfo string) *TmplTable {
 }
 
 func (t *TmplTable) AddCol(col *TmplCol) error {
+	col.Table = t
 	t.Cols.Cols = append(t.Cols.Cols, col)
 	return nil
 }
@@ -65,7 +66,7 @@ func (tc *TmplTable) GetIdxs() *TmplIdxs {
 		for k, v := range col.GetPK() {
 			idx, ok := tblIdx.Map[k]
 			if !ok {
-				idx = &TmplIdx{Table: tc, IdxType: indextype.PK, Name: k}
+				idx = &TmplIdx{Table: tc, IdxType: indextype.PK, Name: k, Cols: tmplIdxColList{}}
 				tblIdx.Map[k] = idx
 			}
 			idx.Cols = append(idx.Cols, tmplIdxCol{ColName: col.ColName, Sort: v})

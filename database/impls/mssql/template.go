@@ -3,7 +3,7 @@ package mssql
 const TmplCreateTable = `
 {{$count:=.Cols.Cols|length -}}
 
-{{- if .Drop}}
+{{- if .DropTable}}
 	
 if exists (select * from sysobjects where id = object_id('{{.Name}}') and OBJECTPROPERTY(id, 'IsUserTable') = 1)
 	drop table {{.Name}}
@@ -13,16 +13,19 @@ go
 	
 CREATE TABLE {{.Name}} (
 		{{range $i,$c:=.Cols.Cols -}}
-		{{$c.Name}} {{$c|dbcolType}} {{$c|isNull}}  {{$c|defaultValue}},
+		{{$c.ColName}} {{$c|dbcolType}} {{$c|isNull}}  {{$c|defaultValue}},
 		{{end -}}
 	{{.|generatePK}}
 		
-)'
+)
 
 {{.|generateIdx}}
 
+
+go 
 {{.|generateComment}}
   
+go 
   `
 
 const TmplDiffSQLModify = `

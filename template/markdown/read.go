@@ -14,10 +14,6 @@ import (
 	"github.com/zhiyunliu/gluecli/model"
 )
 
-const (
-	Template = "markdown"
-)
-
 //Line 每一行信息
 type Line struct {
 	Text    string
@@ -106,7 +102,7 @@ func tableLine2Table(lines TableLine) (tables *model.TmplTableList, err error) {
 			if i < 3 {
 				continue
 			}
-			c, err := line2TableRow(line)
+			c, err := line2TableCol(line)
 			if err != nil {
 				return nil, err
 			}
@@ -126,7 +122,7 @@ func tableLine2Table(lines TableLine) (tables *model.TmplTableList, err error) {
 	return tables, nil
 }
 
-func line2TableRow(line *Line) (*model.TmplCol, error) {
+func line2TableCol(line *Line) (*model.TmplCol, error) {
 	if strings.Count(line.Text, "|") != 7 {
 		return nil, fmt.Errorf("表结构有误(行:%d)", line.LineNum)
 	}
