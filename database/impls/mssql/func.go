@@ -35,9 +35,10 @@ var (
 	}
 
 	colTypeMap = map[string]string{
-		`^varchar\(\d+\)$`:        "varchar(*)",
+		`^varchar\((\d+)\)$`:      "varchar(*)",
 		`^varchar2\((\d+)\)$`:     "varchar(*)",
-		`^nvarchar2\(\d+\)$`:      "nvarchar(*)",
+		`^nvarchar2\((\d+)\)$`:    "nvarchar(*)",
+		`^number\((\d+),(\d+)\)$`: "decimal(*)",
 		`^date$`:                  "datetime",
 		`^datetime$`:              "datetime",
 		`^timestamp$`:             "datetime",
@@ -49,8 +50,6 @@ var (
 		`^number\(10\)$`:          "int",
 		`^number\(1[1-9]{1}\)$`:   "bigint",
 		`^number\(2[0-9]{1}\)$`:   "bigint",
-		`^number\((\d+),(\d+)\)$`: "decimal(*)",
-		`^varchar\((\d+)\)$`:      "varchar(*)",
 		`^string$`:                "tinytext",
 		`^text$`:                  "text",
 		`^longtext$`:              "text",

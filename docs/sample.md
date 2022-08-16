@@ -11,7 +11,7 @@
 | ----------- | ------------ | :-----: | :---: | :----------------: | :------- |
 | mer_no      | varchar2(32) |         |  否   |         PK         | 编号     |
 | mer_name    | varchar2(64) |         |  否   | UNQ(merchant_name) | 名称     |
-| mer_crop    | varchar2(64) |         |  是   |                    | 公司     |
+| mer_crop    | varchar(64)  |         |  是   |                    | 公司     |
 | mer_type    | number(1)    |         |  否   |                    | 类型     |
 | bd_uid      | number(20)   |         |  否   |                    | 商务人员 |
 | status      | number(1)    |    0    |  否   |                    | 状态     |
