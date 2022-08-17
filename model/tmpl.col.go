@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	seqPattern = regexp.MustCompile(`SEQ(\((\d+(,\d+)?)\))?`)
 	pkPattern  = regexp.MustCompile(`PK(\(\w+(,\d+)?\))?`)
 	idxPattern = regexp.MustCompile(`IDX(\(\w+(,\d+)?\))?`)
 	unqPattern = regexp.MustCompile(`UNQ(\(\w+(,\d+)?\))?`)
@@ -44,6 +45,24 @@ func (c *TmplCol) HasPk() bool {
 		}
 	}
 	return false
+}
+
+func (c *TmplCol) GetSeq() *KV {
+	parties := seqPattern.FindAllString(c.Condition, -1)
+	for i := range parties {
+		vals := seqPattern.FindStringSubmatch(parties[i])
+		tmpV := vals[2]
+		if tmpV == "" {
+			return &KV{K: "1", V: "1"}
+		}
+		if !strings.Contains(tmpV, ",") {
+			return &KV{K: tmpV, V: "1"}
+		}
+		ps := strings.SplitN(tmpV, ",", 2)
+		return &KV{K: ps[0], V: ps[1]}
+	}
+
+	return nil
 }
 
 func (c *TmplCol) GetPK() map[string]int {

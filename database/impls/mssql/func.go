@@ -72,7 +72,6 @@ func init() {
 					return v
 				}
 				value := reg.FindStringSubmatch(colType)
-				fmt.Printf("%s:%s[%s]\n", col.ColName, colType, strings.Join(value, "|"))
 				if len(value) > 1 {
 					return strings.Replace(v, "*", strings.Join(value[1:], ","), -1)
 				}
@@ -80,6 +79,14 @@ func init() {
 			}
 		}
 		return colType
+	}
+
+	funcMap["seq"] = func(col *model.TmplCol) string {
+		seqV := col.GetSeq()
+		if seqV == nil {
+			return ""
+		}
+		return fmt.Sprintf(" IDENTITY(%s,%s)", seqV.K, seqV.V)
 	}
 
 	funcMap["defaultValue"] = func(col *model.TmplCol) string {

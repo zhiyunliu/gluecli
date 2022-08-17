@@ -97,3 +97,22 @@ func TestTmplCol_GetUnq(t *testing.T) {
 		})
 	}
 }
+
+func TestTmplCol_GetSeq(t *testing.T) {
+	tests := []struct {
+		name string
+		c    *TmplCol
+		want map[string]string
+	}{
+		{name: "1.1.", c: &TmplCol{Condition: "SEQ", Table: &TmplTable{Name: "test"}}, want: map[string]string{"1": "1"}},
+		{name: "1.2.", c: &TmplCol{Condition: "SEQ(100)"}, want: map[string]string{"100": "1"}},
+		{name: "1.3.", c: &TmplCol{Condition: "SEQ(1000,2)"}, want: map[string]string{"1000": "2"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.c.GetSeq(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TmplCol.GetSeq() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

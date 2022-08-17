@@ -13,7 +13,7 @@ go
 	
 CREATE TABLE {{.Name}} (
 		{{range $i,$c:=.Cols.Cols -}}
-		{{$c.ColName}} {{$c|dbcolType}} {{$c|isNull}}  {{$c|defaultValue}},
+		{{$c.ColName}} {{$c|dbcolType}} {{$c|seq}} {{$c|isNull}}  {{$c|defaultValue}},
 		{{end -}}
 	{{.|generatePK}}
 		
