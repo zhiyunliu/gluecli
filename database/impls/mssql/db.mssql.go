@@ -41,6 +41,16 @@ func (db *dbMssql) BuildScheme(tbl *model.TmplTable) (content string, err error)
 	}
 	return strings.Replace(strings.Replace(buff.String(), "{###}", "`", -1), "&#39;", "'", -1), nil
 }
+
 func (db *dbMssql) Diff(tbl *model.TmplTable) (content string, err error) {
-	return
+	var tmpl = template.New("table").Funcs(funcMap)
+	np, err := tmpl.Parse(TmplDiffSQLModify)
+	if err != nil {
+		return "", err
+	}
+	buff := bytes.NewBufferString("")
+	if err := np.Execute(buff, tbl); err != nil {
+		return "", err
+	}
+	return strings.Replace(strings.Replace(buff.String(), "{###}", "`", -1), "&#39;", "'", -1), nil
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
 	"github.com/zhiyunliu/gluecli/consts/enums/indextype"
 )
 
@@ -24,6 +25,51 @@ func (tc *TmplCols) Count() int {
 	return len(tc.Cols)
 }
 
+func (tc *TmplCols) getColMap() map[string]*TmplCol {
+	m := make(map[string]*TmplCol, len(tc.Cols))
+	for _, c := range tc.Cols {
+		m[c.ColName] = c
+	}
+	return m
+}
+
+func (tc *TmplCols) Diff(dest *TmplCols) []*TmplCol {
+
+	sourceM := tc.getColMap()
+	targetM := dest.getColMap()
+
+	diff := make([]*TmplCol, 0)
+
+	//新增
+	for name, col := range sourceM {
+		if _, ok := targetM[name]; !ok {
+			col.Operation = diffoeration.Insert
+			diff = append(diff, col)
+			delete(sourceM, name)
+		}
+	}
+
+	//减少
+	for name, col := range targetM {
+		if _, ok := sourceM[name]; !ok {
+			col.Operation = diffoeration.Delete
+			diff = append(diff, col)
+			delete(targetM, name)
+		}
+	}
+
+	//变动
+	for name, scol := range sourceM {
+		if !scol.Equal(targetM[name]) {
+			scol.Operation = diffoeration.Modify
+			diff = append(diff, scol)
+		}
+	}
+
+	return diff
+
+}
+
 type TmplCol struct {
 	LineNum    int
 	Table      *TmplTable
@@ -35,6 +81,19 @@ type TmplCol struct {
 	Default    string
 	Comment    string
 	Condition  string
+
+	//*****************
+	Operation diffoeration.Operation
+}
+
+func (c *TmplCol) Equal(t *TmplCol) bool {
+	return strings.EqualFold(c.ColName, t.ColName) &&
+		strings.EqualFold(c.ColType, t.ColType) &&
+		strings.EqualFold(c.Default, t.Default) &&
+		strings.EqualFold(c.IsNull, t.IsNull) &&
+		strings.EqualFold(c.Comment, t.Comment) &&
+		c.ColLen == t.ColLen &&
+		c.DecimalLen == t.DecimalLen
 }
 
 func (c *TmplCol) HasPk() bool {

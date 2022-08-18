@@ -22,9 +22,11 @@ type schemeDiffOptions struct {
 func buildSchemeDiffCmd() cli.Command {
 	opts := &schemeDiffOptions{}
 	cmd := cli.Command{
-		Name:   "diff",
-		Usage:  "创建数据库结构差异文件",
-		Action: createDiff,
+		Name:  "diff",
+		Usage: "创建数据库结构差异文件",
+		Action: func(ctx *cli.Context) (err error) {
+			return createDiff(ctx, opts)
+		},
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "dbtype,dt", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "filea,fa", Destination: &opts.MdFilePathA, Usage: `-A文件`},
@@ -39,8 +41,8 @@ func buildSchemeDiffCmd() cli.Command {
 
 //createDiff 生成数据库结构
 func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
-	if len(c.Args()) < 2 {
-		return fmt.Errorf("未指定需要对比的源md文件和目标md文件")
+	if opts.MdFilePathA == "" || opts.MdFilePathB == "" {
+		return fmt.Errorf("未指定需要对比的源md文件或目标md文件. --fa,--fb")
 	}
 	sourceTbs, err := template.ReadPath(opts.MdFilePathA)
 	if err != nil {
@@ -55,7 +57,15 @@ func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 	sourceTbs.FilterTable(opts.TableName)
 	sourceTbs.Exclude()
 
+	//过滤表
+	targetTbs.FilterTable(opts.TableName)
+	targetTbs.Exclude()
+
 	diff := sourceTbs.Diff(targetTbs)
+
+	if len(diff.Tables) == 0 {
+		return fmt.Errorf("两个文件是一样的")
+	}
 
 	for _, tb := range diff.Tables {
 		//创建文件
@@ -75,6 +85,5 @@ func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 			return err
 		}
 	}
-
 	return nil
 }

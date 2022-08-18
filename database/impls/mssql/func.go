@@ -173,12 +173,34 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 	}
 
 	funcMap["generateComment"] = func(tbl *model.TmplTable) string {
-		tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
 		list := []string{}
 		for _, col := range tbl.Cols.Cols {
-			r := fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
+			r := colComment(col)
 			list = append(list, r)
 		}
 		return strings.Join(list, "\r\n")
 	}
+
+	funcMap["colComment"] = colComment
+
+	//idx
+	funcMap["isPk"] = func(idx *model.TmplIdx) bool {
+		return strings.EqualFold(idx.IdxType, indextype.PK)
+	}
+	funcMap["isIndex"] = func(idx *model.TmplIdx) bool {
+		return strings.EqualFold(idx.IdxType, indextype.Idx)
+	}
+	funcMap["isUNQ"] = func(idx *model.TmplIdx) bool {
+		return strings.EqualFold(idx.IdxType, indextype.Unq)
+	}
+
+	funcMap["indexStr"] = func(idx *model.TmplIdx) string {
+		return idx.Name
+	}
+
+}
+
+func colComment(col *model.TmplCol) string {
+	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
+	return fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
 }

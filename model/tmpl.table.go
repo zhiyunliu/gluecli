@@ -3,6 +3,7 @@ package model
 import (
 	"strings"
 
+	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
 	"github.com/zhiyunliu/gluecli/consts/enums/indextype"
 )
 
@@ -18,6 +19,10 @@ type TmplTable struct {
 	DropTable bool //生成删除语句
 	Exclude   bool //排除生成sql
 
+	//********************
+	Operation diffoeration.Operation
+	DiffCols  []*TmplCol
+	DiffIdxs  []*TmplIdx
 }
 
 //NewTable 创建表
