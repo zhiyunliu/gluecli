@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/micro-plat/lib4go/types"
 	"github.com/zhiyunliu/gluecli/model"
+	"github.com/zhiyunliu/golibs/xtypes"
 )
 
 //Line 每一行信息
@@ -207,9 +207,14 @@ func getColType(line *Line) (string, int, int, error) {
 		return t, 0, 0, nil
 	}
 	if len(names) == 2 {
-		return t, types.GetInt(names[1]), 0, nil
+		return t, mustGetInt(names[1]), 0, nil
 	}
-	return t, types.GetInt(names[1]), types.GetInt(names[2]), nil
+	return t, mustGetInt(names[1]), mustGetInt(names[2]), nil
+}
+
+func mustGetInt(obj interface{}) int {
+	v, _ := xtypes.GetInt(obj)
+	return v
 }
 
 func getMatchFiles(path string) (paths []string) {

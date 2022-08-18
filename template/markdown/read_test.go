@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/micro-plat/lib4go/assert"
+	"github.com/bmizerany/assert"
 )
 
 func TestRead(t *testing.T) {
