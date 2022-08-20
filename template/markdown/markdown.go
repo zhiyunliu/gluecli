@@ -2,7 +2,6 @@ package markdown
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"strings"
 
@@ -26,21 +25,19 @@ func (m *markdown) Name() string {
 func (m *markdown) ReadPath(filePath string) (list *model.TmplTableList, err error) {
 	fns := getMatchFiles(filePath)
 	//读取文件
-	totalTableList := &model.TmplTableList{
-		Map: make(map[string]bool),
-	}
+	totalTableList := model.NewTableList()
 	for _, fn := range fns {
 		newTable, err := readFile(fn)
 		if err != nil {
 			return nil, err
 		}
-		for key := range newTable.Map {
-			if _, ok := totalTableList.Map[key]; ok {
-				return nil, fmt.Errorf("存在相同的表名：%s", key)
+
+		for i := range newTable.Tables {
+			err = totalTableList.Append(newTable.Tables[i])
+			if err != nil {
+				return nil, err
 			}
-			totalTableList.Map[key] = true
 		}
-		totalTableList.Tables = append(totalTableList.Tables, newTable.Tables...)
 	}
 	return totalTableList, nil
 }

@@ -28,7 +28,7 @@ func buildSchemeDiffCmd() cli.Command {
 			return createDiff(ctx, opts)
 		},
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "dbtype,dt", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
+			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "filea,fa", Destination: &opts.MdFilePathA, Usage: `-A文件`},
 			cli.StringFlag{Name: "fileb,fb", Destination: &opts.MdFilePathB, Usage: `-B文件`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},

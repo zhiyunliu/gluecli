@@ -12,24 +12,20 @@ go
 {{end -}}
 	
 CREATE TABLE {{.Name}} (
-		{{range $i,$c:=.Cols.Cols -}}
-		{{$c.ColName}} {{$c|dbcolType}} {{$c|seq}} {{$c|isNull}}  {{$c|defaultValue}},
-		{{end -}}
-	{{.|generatePK}}
-		
+	{{range $i,$c:=.Cols.Cols -}}
+	{{$c.ColName}} {{$c|dbcolType}} {{$c|seq}} {{$c|isNull}}  {{$c|defaultValue}},
+	{{end -}}
+	{{.|generatePK}}	
 )
-
-{{.|generateIdx}}
-
-
 go 
-{{.|generateComment}}
-  
+
+{{.|generateIdx}} 
 go 
   `
 
 const TmplDiffSQLModify = `
 
+-- 字段处理 {{$.Name}} 
 {{- range $i,$c:=.DiffCols}}
 {{- if (eq $c.Operation -1)}}
 -- 删除字段 {{$c.ColName}} 
@@ -37,41 +33,42 @@ ALTER TABLE {{$.Name}} drop COLUMN {{$c.ColName}};
 {{- else if (eq $c.Operation 1)}}
 -- 新增字段 {{$c.ColName}} 
 ALTER TABLE {{$.Name}} add COLUMN {{$c.ColName}} {{$c|dbcolType}} {{$c|seq}}  {{$c|isNull}} {{$c|defaultValue}}  ;
-{{$c|colComment}}
-
 {{- else if (eq $c.Operation 2)}}
 -- 修改字段 {{$c.ColName}} 
-ALTER TABLE {{$.Name}} MODIFY {{$c.ColName}} {{$c|dbcolType}} {{$c|seq}} {{$c|isNull}}  {{$c|defaultValue}}  ;
-{{$c|colComment}}
-
+ALTER TABLE {{$.Name}} alter  {{$c.ColName}} {{$c|dbcolType}}  {{$c|isNull}}  {{$c|defaultValue}}  ;
 {{- end}}
 {{- end}}
 
-
+-- 索引处理 {{$.Name}} 
 {{- range $i,$c:=.DiffIdxs}}
 {{- if and (eq $c.Operation -1) ($c|isPk)}}
 -- 删除主键 {{$c.Name}} 
-ALTER TABLE {{$.Name}} DROP PRIMARY KEY;
-
+ALTER TABLE {{$.Name}} DROP CONSTRAINT {{$c.Name}};
 {{- else if and (eq $c.Operation 1) ($c|isPk)}}
 -- 新增主键 {{$c.Name}} 
-ALTER TABLE {{$.Name}} ADD {{$c|indexStr}};
-
+ALTER TABLE {{$.Name}} ADD  CONSTRAINT $c.Name PRIMARY KEY CLUSTERED ({{$c|indexCols}});
 {{- else if and (eq $c.Operation 2) ($c|isPk)}}
 -- 修改主键 {{$c.Name}} 
-ALTER TABLE {{$.Name}} DROP PRIMARY KEY;
-ALTER TABLE {{$.Name}} ADD {{$c|indexStr}};
+ALTER TABLE {{$.Name}} DROP CONSTRAINT {{$c.Name}};
+ALTER TABLE {{$.Name}} ADD  CONSTRAINT {{$c.Name}} PRIMARY KEY CLUSTERED ({{$c|indexCols}});
+{{- else if and (eq $c.Operation -1)}}
+-- 删除Index/UNQUE {{$c.Name}} 
+DROP INDEX {{$c.Name}} ON  {{$.Name}};
+{{- else if and (eq $c.Operation 1) ($c|isIDX)}}
+-- 新增IDX索引 {{$c.Name}} 
+CREATE NONCLUSTERED INDEX {{$c.Name}} ON {{$.Name}} ({{$c|indexCols}});
+{{- else if and (eq $c.Operation 1) ($c|isUNQ)}}
+-- 新增UNQ索引 {{$c.Name}} 
+CREATE UNIQUE NONCLUSTERED INDEX {{$c.Name}} ON {{$.Name}} ({{$c|indexCols}});
+{{- else if and (eq $c.Operation 2) ($c|isIDX)}}
+-- 修改IDX索引 {{$c.Name}} 
+DROP INDEX {{$c.Name}} ON  {{$.Name}};
+CREATE NONCLUSTERED INDEX {{$c.Name}} ON {{$.Name}} ({{$c|indexCols}});
+{{- else if and (eq $c.Operation 2) ($c|isUNQ)}}
+-- 修改UNQ索引 {{$c.Name}} 
+DROP INDEX {{$c.Name}} ON  {{$.Name}};
+CREATE UNIQUE NONCLUSTERED INDEX {{$c.Name}} ON {{$.Name}} ({{$c|indexCols}});
 
-{{- else if and (eq $c.Operation -1) (or ($c|isIndex) ($c|isUNQ))}}
--- 删除索引 {{$c.Name}} 
-ALTER TABLE {{$.Name}} DROP INDEX {{$c.Name}};
-{{- else if and (eq $c.Operation 1) (or ($c|isIndex) ($c|isUNQ))}}
--- 新增索引 {{$c.Name}} 
-ALTER TABLE {{$.Name}} ADD {{$c|indexStr}};
-{{- else if and (eq $c.Operation 2) (or ($c|isIndex) ($c|isUNQ))}}
--- 修改索引 {{$c.Name}} 
-ALTER TABLE {{$.Name}} DROP INDEX {{$c.Name}};
-ALTER TABLE {{$.Name}} ADD {{$c|indexStr}};
 {{- end}}
 {{- end}}
 `

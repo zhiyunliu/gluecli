@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
@@ -8,7 +9,22 @@ import (
 
 type TmplTableList struct {
 	Tables []*TmplTable
-	Map    map[string]bool
+	tblMap map[string]bool
+}
+
+func NewTableList() *TmplTableList {
+	return &TmplTableList{
+		Tables: make([]*TmplTable, 0),
+		tblMap: make(map[string]bool),
+	}
+}
+
+func (t *TmplTableList) Append(tbl *TmplTable) (err error) {
+	if _, ok := t.tblMap[tbl.Name]; ok {
+		return fmt.Errorf("存在相同的表名：%s", tbl.Name)
+	}
+	t.Tables = append(t.Tables, tbl)
+	return nil
 }
 
 //FilterTable 过滤行信息(逗号分隔)

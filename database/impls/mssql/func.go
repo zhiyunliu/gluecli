@@ -116,10 +116,8 @@ func init() {
 	}
 
 	funcMap["generatePK"] = func(tbl *model.TmplTable) string {
-		tmpl := `
-CONSTRAINT @{Name} PRIMARY KEY CLUSTERED 
-(
-	@{PkCols}
+		tmpl := `CONSTRAINT @{Name} PRIMARY KEY CLUSTERED (
+		@{PkCols}
 ) 
 `
 
@@ -135,7 +133,7 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 		}
 
 		result := xtransform.Translate(tmpl, map[string]interface{}{
-			"Name":   tbl.Name,
+			"Name":   pks.Name,
 			"PkCols": strings.Join(pkslist, ","),
 		})
 
@@ -149,12 +147,12 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 
 		list := []string{}
 
-		for k, v := range idxs.Map {
+		for _, v := range idxs.GetIdxList() {
 			if strings.EqualFold(v.IdxType, indextype.PK) {
 				continue
 			}
 			param := map[string]interface{}{
-				"idx_name":   k,
+				"idx_name":   v.Name,
 				"table_name": tbl.Name,
 			}
 			if strings.EqualFold(v.IdxType, indextype.Unq) {
@@ -187,7 +185,7 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 	funcMap["isPk"] = func(idx *model.TmplIdx) bool {
 		return strings.EqualFold(idx.IdxType, indextype.PK)
 	}
-	funcMap["isIndex"] = func(idx *model.TmplIdx) bool {
+	funcMap["isIDX"] = func(idx *model.TmplIdx) bool {
 		return strings.EqualFold(idx.IdxType, indextype.Idx)
 	}
 	funcMap["isUNQ"] = func(idx *model.TmplIdx) bool {
@@ -196,6 +194,14 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 
 	funcMap["indexStr"] = func(idx *model.TmplIdx) string {
 		return idx.Name
+	}
+
+	funcMap["indexCols"] = func(idx *model.TmplIdx) string {
+		list := make([]string, len(idx.Cols))
+		for i, col := range idx.Cols {
+			list[i] = fmt.Sprintf("%s ASC", col.ColName)
+		}
+		return strings.Join(list, ",")
 	}
 
 }

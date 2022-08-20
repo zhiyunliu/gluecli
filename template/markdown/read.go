@@ -81,7 +81,7 @@ func line2TableLine(lines []*Line) (tl TableLine) {
 
 //tableLine2Table 表数据行变为表
 func tableLine2Table(lines TableLine) (tables *model.TmplTableList, err error) {
-	tables = &model.TmplTableList{Tables: make([]*model.TmplTable, 0, 1), Map: make(map[string]bool)}
+	tables = model.NewTableList()
 	for _, tline := range lines.Lines {
 		//markdown表格的表名，标题，标题数据区分行，共三行
 		if len(tline) <= 3 {
@@ -112,11 +112,10 @@ func tableLine2Table(lines TableLine) (tables *model.TmplTableList, err error) {
 			}
 		}
 		if tb != nil {
-			if _, ok := tables.Map[tb.Name]; ok {
+			err = tables.Append(tb)
+			if err != nil {
 				return nil, fmt.Errorf("存在相同的表名：%s", tb.Name)
 			}
-			tables.Map[tb.Name] = true
-			tables.Tables = append(tables.Tables, tb)
 		}
 	}
 	return tables, nil
