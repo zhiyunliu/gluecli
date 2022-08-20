@@ -24,8 +24,6 @@ go
   `
 
 const TmplDiffSQLModify = `
-
--- 字段处理 {{$.Name}} 
 {{- range $i,$c:=.DiffCols}}
 {{- if (eq $c.Operation -1)}}
 -- 删除字段 {{$c.ColName}} 
@@ -39,7 +37,8 @@ ALTER TABLE {{$.Name}} alter  {{$c.ColName}} {{$c|dbcolType}}  {{$c|isNull}}  {{
 {{- end}}
 {{- end}}
 
--- 索引处理 {{$.Name}} 
+
+ 
 {{- range $i,$c:=.DiffIdxs}}
 {{- if and (eq $c.Operation -1) ($c|isPk)}}
 -- 删除主键 {{$c.Name}} 

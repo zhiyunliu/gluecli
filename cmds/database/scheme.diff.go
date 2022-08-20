@@ -29,8 +29,8 @@ func buildSchemeDiffCmd() cli.Command {
 		},
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
-			cli.StringFlag{Name: "filea,fa", Destination: &opts.MdFilePathA, Usage: `-A文件`},
-			cli.StringFlag{Name: "fileb,fb", Destination: &opts.MdFilePathB, Usage: `-B文件`},
+			cli.StringFlag{Name: "filesrc,fa", Destination: &opts.MdFilePathA, Usage: `-src文件`},
+			cli.StringFlag{Name: "filedest,fb", Destination: &opts.MdFilePathB, Usage: `-dest文件`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},
 			cli.StringFlag{Name: "table,t", Destination: &opts.TableName, Usage: `-表名称`},
 			cli.BoolFlag{Name: "cover,v", Destination: &opts.NeedCoverFile, Usage: `-文件存在时覆盖`},
@@ -44,15 +44,15 @@ func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 	if opts.MdFilePathA == "" || opts.MdFilePathB == "" {
 		return fmt.Errorf("未指定需要对比的源md文件或目标md文件. --fa,--fb")
 	}
-	sourceTbs, err := template.ReadPath(opts.MdFilePathA)
-	if err != nil {
-		return err
-	}
-	targetTbs, err := template.ReadPath(opts.MdFilePathB)
-	if err != nil {
-		return err
-	}
 
+	targetTbs, err := template.ReadPath(opts.MdFilePathA)
+	if err != nil {
+		return err
+	}
+	sourceTbs, err := template.ReadPath(opts.MdFilePathB)
+	if err != nil {
+		return err
+	}
 	//过滤表
 	sourceTbs.FilterTable(opts.TableName)
 	sourceTbs.Exclude()
