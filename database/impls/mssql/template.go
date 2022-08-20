@@ -24,6 +24,8 @@ go
   `
 
 const TmplDiffSQLModify = `
+{{ $empty := "" -}}
+
 {{- range $i,$c:=.DiffCols}}
 {{- if (eq $c.Operation -1)}}
 -- 删除字段 {{$c.ColName}} 
@@ -33,7 +35,10 @@ ALTER TABLE {{$.Name}} drop COLUMN {{$c.ColName}};
 ALTER TABLE {{$.Name}} add COLUMN {{$c.ColName}} {{$c|dbcolType}} {{$c|seq}}  {{$c|isNull}} {{$c|defaultValue}}  ;
 {{- else if (eq $c.Operation 2)}}
 -- 修改字段 {{$c.ColName}} 
-ALTER TABLE {{$.Name}} alter  {{$c.ColName}} {{$c|dbcolType}}  {{$c|isNull}}  {{$c|defaultValue}}  ;
+{{- range $i,$dp:=$c.ColDiffPart}}
+{{if (eq $dp 1)}}ALTER TABLE {{$.Name}} ALTER COLUMN {{$c.ColName}} {{$c|dbcolType}}  {{$c|isNull}};{{end}}
+{{if (eq $dp 2)}}ALTER TABLE {{$.Name}} ADD CONSTRAINT  DF_{{$.Name}}_{{$c.ColName}}  DEFAULT ({{$c|alterDefaultValue}}) FOR {{$c.ColName}};{{end}}
+{{- end}}
 {{- end}}
 {{- end}}
 

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/zhiyunliu/gluecli/model"
-	"github.com/zhiyunliu/gluecli/objecttypes"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 
 type DbImpl interface {
 	DbType() string
-	GetDbInfo(args ...interface{}) (*objecttypes.DbInfo, error)
+	GetDbInfo(args ...interface{}) (*model.DbInfo, error)
 	BuildScheme(tbl *model.TmplTable) (content string, err error)
 	Diff(tbl *model.TmplTable) (content string, err error)
 }

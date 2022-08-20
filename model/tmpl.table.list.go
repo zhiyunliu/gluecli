@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
+	"github.com/zhiyunliu/gluecli/consts/enums/difftype"
 )
 
 type TmplTableList struct {
@@ -79,7 +79,7 @@ func (t *TmplTableList) Diff(dest *TmplTableList) *TmplTableList {
 	//新增
 	for tname, table := range sourceM {
 		if _, ok := targetM[tname]; !ok {
-			table.Operation = diffoeration.Insert
+			table.Operation = difftype.Insert
 			diff.Tables = append(diff.Tables, table)
 			delete(sourceM, tname)
 		}
@@ -88,7 +88,7 @@ func (t *TmplTableList) Diff(dest *TmplTableList) *TmplTableList {
 	//减少
 	for tname, table := range targetM {
 		if _, ok := sourceM[tname]; !ok {
-			table.Operation = diffoeration.Delete
+			table.Operation = difftype.Delete
 			diff.Tables = append(diff.Tables, table)
 			delete(targetM, tname)
 		}
@@ -110,7 +110,7 @@ func (t *TmplTableList) Diff(dest *TmplTableList) *TmplTableList {
 			sourceTable.DiffIdxs = diffIdxs
 		}
 		if len(diffCols) > 0 || len(diffIdxs) > 0 {
-			sourceTable.Operation = diffoeration.Modify
+			sourceTable.Operation = difftype.Modify
 			diff.Tables = append(diff.Tables, sourceTable)
 		}
 	}

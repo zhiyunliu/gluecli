@@ -1,6 +1,7 @@
 package define
 
 import (
+	"os"
 	"sync"
 
 	"github.com/zhiyunliu/gluecli/model"
@@ -13,7 +14,7 @@ var (
 type Template interface {
 	Name() string
 	ReadPath(filePath string) (list *model.TmplTableList, err error)
-	Translate(dbType string, input interface{}) (string, error)
+	Translate(file *os.File, dbType string, input interface{}) error
 }
 
 func Load(name string) Template {

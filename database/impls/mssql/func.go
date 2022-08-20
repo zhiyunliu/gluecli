@@ -111,6 +111,16 @@ func init() {
 		return fmt.Sprintf(" default %s", newVal)
 	}
 
+	funcMap["defaultValue"] = func(col *model.TmplCol) string {
+		newVal := colDefaultVal(col)
+		return fmt.Sprintf(" default %s", newVal)
+	}
+
+	funcMap["alterDefaultValue"] = func(col *model.TmplCol) string {
+		newVal := colDefaultVal(col)
+		return newVal
+	}
+
 	funcMap["isNull"] = func(col *model.TmplCol) string {
 		return nullMap.GetString(strings.TrimSpace(col.IsNull))
 	}
@@ -204,6 +214,29 @@ func init() {
 		return strings.Join(list, ",")
 	}
 
+}
+
+func colDefaultVal(col *model.TmplCol) string {
+	col.Default = strings.TrimSpace(col.Default)
+
+	if strings.EqualFold(col.Default, "") {
+		return ""
+	}
+	newVal := defaultMap.GetString(col.Default)
+	if newVal == "" {
+		newVal = col.Default
+	}
+
+	switch col.ColType {
+	case "text":
+		fallthrough
+	case "varchar":
+		fallthrough
+	case "nvarchar":
+		newVal = fmt.Sprintf("'%s'", newVal)
+	default:
+	}
+	return newVal
 }
 
 func colComment(col *model.TmplCol) string {

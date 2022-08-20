@@ -3,7 +3,7 @@ package model
 import (
 	"strings"
 
-	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
+	"github.com/zhiyunliu/gluecli/consts/enums/difftype"
 	"github.com/zhiyunliu/gluecli/consts/enums/indextype"
 )
 
@@ -20,7 +20,7 @@ type TmplTable struct {
 	Exclude   bool //排除生成sql
 
 	//********************
-	Operation diffoeration.Operation
+	Operation difftype.Operation
 	DiffCols  []*TmplCol
 	DiffIdxs  []*TmplIdx
 }

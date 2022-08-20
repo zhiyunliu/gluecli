@@ -7,7 +7,6 @@ import (
 
 	"github.com/zhiyunliu/gluecli/database/define"
 	"github.com/zhiyunliu/gluecli/model"
-	"github.com/zhiyunliu/gluecli/objecttypes"
 )
 
 const (
@@ -25,7 +24,8 @@ func (db *dbMssql) DbType() string {
 	return DbType
 }
 
-func (db *dbMssql) GetDbInfo(args ...interface{}) (dbInfo *objecttypes.DbInfo, err error) {
+func (db *dbMssql) GetDbInfo(args ...interface{}) (dbInfo *model.DbInfo, err error) {
+
 	return
 }
 

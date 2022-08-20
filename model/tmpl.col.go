@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
+	"github.com/zhiyunliu/gluecli/consts/enums/difftype"
 	"github.com/zhiyunliu/gluecli/consts/enums/indextype"
 )
 
@@ -43,7 +43,7 @@ func (tc *TmplCols) Diff(dest *TmplCols) []*TmplCol {
 	//新增
 	for name, col := range sourceM {
 		if _, ok := targetM[name]; !ok {
-			col.Operation = diffoeration.Insert
+			col.Operation = difftype.Insert
 			diff = append(diff, col)
 			delete(sourceM, name)
 		}
@@ -52,7 +52,7 @@ func (tc *TmplCols) Diff(dest *TmplCols) []*TmplCol {
 	//减少
 	for name, col := range targetM {
 		if _, ok := sourceM[name]; !ok {
-			col.Operation = diffoeration.Delete
+			col.Operation = difftype.Delete
 			diff = append(diff, col)
 			delete(targetM, name)
 		}
@@ -60,8 +60,9 @@ func (tc *TmplCols) Diff(dest *TmplCols) []*TmplCol {
 
 	//变动
 	for name, scol := range sourceM {
-		if !scol.Equal(targetM[name]) {
-			scol.Operation = diffoeration.Modify
+		if part, eq := scol.Equal(targetM[name]); !eq {
+			scol.Operation = difftype.Modify
+			scol.ColDiffPart = part
 			diff = append(diff, scol)
 		}
 	}
@@ -83,17 +84,26 @@ type TmplCol struct {
 	Condition  string
 
 	//*****************
-	Operation diffoeration.Operation
+	Operation   difftype.Operation
+	ColDiffPart []difftype.DBColPart
 }
 
-func (c *TmplCol) Equal(t *TmplCol) bool {
-	return strings.EqualFold(c.ColName, t.ColName) &&
+func (c *TmplCol) Equal(t *TmplCol) ([]difftype.DBColPart, bool) {
+	parties := []difftype.DBColPart{}
+	eq := strings.EqualFold(c.ColName, t.ColName) &&
 		strings.EqualFold(c.ColType, t.ColType) &&
-		strings.EqualFold(c.Default, t.Default) &&
 		strings.EqualFold(c.IsNull, t.IsNull) &&
 		strings.EqualFold(c.Comment, t.Comment) &&
 		c.ColLen == t.ColLen &&
 		c.DecimalLen == t.DecimalLen
+	if !eq {
+		parties = append(parties, difftype.ColProperty)
+	}
+	if !strings.EqualFold(c.Default, t.Default) {
+		parties = append(parties, difftype.ColDefault)
+	}
+
+	return parties, len(parties) == 0
 }
 
 func (c *TmplCol) HasPk() bool {

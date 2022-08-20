@@ -3,6 +3,7 @@ package markdown
 import (
 	"bytes"
 	"html/template"
+	"os"
 	"strings"
 
 	"github.com/zhiyunliu/gluecli/model"
@@ -42,15 +43,17 @@ func (m *markdown) ReadPath(filePath string) (list *model.TmplTableList, err err
 	return totalTableList, nil
 }
 
-func (m *markdown) Translate(dbType string, input interface{}) (string, error) {
+func (m *markdown) Translate(file *os.File, dbType string, input interface{}) error {
 	var tmpl = template.New("table").Funcs(getfuncs(dbType))
 	np, err := tmpl.Parse(TmplDictionary)
 	if err != nil {
-		return "", err
+		return err
 	}
 	buff := bytes.NewBufferString("")
 	if err := np.Execute(buff, input); err != nil {
-		return "", err
+		return err
 	}
-	return strings.Replace(strings.Replace(buff.String(), "{###}", "`", -1), "&#39;", "'", -1), nil
+	content := strings.Replace(strings.Replace(buff.String(), "{###}", "`", -1), "&#39;", "'", -1)
+	file.WriteString(content)
+	return nil
 }

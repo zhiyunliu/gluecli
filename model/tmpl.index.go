@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zhiyunliu/gluecli/consts/enums/diffoeration"
+	"github.com/zhiyunliu/gluecli/consts/enums/difftype"
 	"github.com/zhiyunliu/gluecli/consts/enums/indextype"
 )
 
@@ -68,7 +68,7 @@ func (t *TmplIdxs) Diff(target *TmplIdxs) []*TmplIdx {
 	//减少,索引要先处理删除
 	for name, idx := range target.idxMap {
 		if _, ok := tempSource[name]; !ok {
-			idx.Operation = diffoeration.Delete
+			idx.Operation = difftype.Delete
 			diff = append(diff, idx)
 		}
 	}
@@ -76,7 +76,7 @@ func (t *TmplIdxs) Diff(target *TmplIdxs) []*TmplIdx {
 	//新增
 	for name, index := range tempSource {
 		if _, ok := target.idxMap[name]; !ok {
-			index.Operation = diffoeration.Insert
+			index.Operation = difftype.Insert
 			diff = append(diff, index)
 			delete(tempSource, name)
 		}
@@ -85,7 +85,7 @@ func (t *TmplIdxs) Diff(target *TmplIdxs) []*TmplIdx {
 	//变动
 	for name, sourceIndex := range tempSource {
 		if !sourceIndex.Equal(target.idxMap[name]) {
-			sourceIndex.Operation = diffoeration.Modify
+			sourceIndex.Operation = difftype.Modify
 			diff = append(diff, sourceIndex)
 		}
 	}
@@ -115,7 +115,7 @@ type TmplIdx struct {
 	Name    string
 	Cols    tmplIdxColList
 	//**************
-	Operation diffoeration.Operation
+	Operation difftype.Operation
 }
 
 func (s *TmplIdx) Equal(t *TmplIdx) bool {
