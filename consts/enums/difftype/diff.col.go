@@ -10,4 +10,6 @@ const (
 	ColProperty DBColPart = 1
 	//列默认值
 	ColDefault DBColPart = 2
+	//列描述
+	ColComment DBColPart = 3
 )

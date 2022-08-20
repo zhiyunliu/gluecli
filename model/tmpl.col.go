@@ -93,7 +93,6 @@ func (c *TmplCol) Equal(t *TmplCol) ([]difftype.DBColPart, bool) {
 	eq := strings.EqualFold(c.ColName, t.ColName) &&
 		strings.EqualFold(c.ColType, t.ColType) &&
 		strings.EqualFold(c.IsNull, t.IsNull) &&
-		strings.EqualFold(c.Comment, t.Comment) &&
 		c.ColLen == t.ColLen &&
 		c.DecimalLen == t.DecimalLen
 	if !eq {
@@ -102,7 +101,9 @@ func (c *TmplCol) Equal(t *TmplCol) ([]difftype.DBColPart, bool) {
 	if !strings.EqualFold(c.Default, t.Default) {
 		parties = append(parties, difftype.ColDefault)
 	}
-
+	if !strings.EqualFold(c.Comment, t.Comment) {
+		parties = append(parties, difftype.ColComment)
+	}
 	return parties, len(parties) == 0
 }
 

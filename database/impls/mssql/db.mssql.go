@@ -39,9 +39,8 @@ func (db *dbMssql) BuildScheme(tbl *model.TmplTable) (content string, err error)
 	if err := np.Execute(buff, tbl); err != nil {
 		return "", err
 	}
-	return strings.Replace(strings.Replace(buff.String(), "{###}", "`", -1), "&#39;", "'", -1), nil
+	return strings.ReplaceAll(buff.String(), "\r\n\r\n", "\r\n"), nil
 }
-
 func (db *dbMssql) Diff(tbl *model.TmplTable) (content string, err error) {
 	var tmpl = template.New("table").Funcs(funcMap)
 	np, err := tmpl.Parse(TmplDiffSQLModify)
@@ -52,5 +51,5 @@ func (db *dbMssql) Diff(tbl *model.TmplTable) (content string, err error) {
 	if err := np.Execute(buff, tbl); err != nil {
 		return "", err
 	}
-	return strings.Replace(strings.Replace(buff.String(), "{###}", "`", -1), "&#39;", "'", -1), nil
+	return strings.ReplaceAll(buff.String(), "\r\n\r\n", "\r\n"), nil
 }

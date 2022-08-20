@@ -20,6 +20,11 @@ CREATE TABLE {{.Name}} (
 go 
 
 {{.|generateIdx}} 
+
+go 
+
+{{.|generateComment}}
+
 go 
   `
 
@@ -33,11 +38,13 @@ ALTER TABLE {{$.Name}} drop COLUMN {{$c.ColName}};
 {{- else if (eq $c.Operation 1)}}
 -- 新增字段 {{$c.ColName}} 
 ALTER TABLE {{$.Name}} add COLUMN {{$c.ColName}} {{$c|dbcolType}} {{$c|seq}}  {{$c|isNull}} {{$c|defaultValue}}  ;
+{{$c|colComment}}
 {{- else if (eq $c.Operation 2)}}
 -- 修改字段 {{$c.ColName}} 
 {{- range $i,$dp:=$c.ColDiffPart}}
 {{if (eq $dp 1)}}ALTER TABLE {{$.Name}} ALTER COLUMN {{$c.ColName}} {{$c|dbcolType}}  {{$c|isNull}};{{end}}
 {{if (eq $dp 2)}}ALTER TABLE {{$.Name}} ADD CONSTRAINT  DF_{{$.Name}}_{{$c.ColName}}  DEFAULT ({{$c|alterDefaultValue}}) FOR {{$c.ColName}};{{end}}
+{{if (eq $dp 3)}}{{$c|colComment}};{{end}}
 {{- end}}
 {{- end}}
 {{- end}}

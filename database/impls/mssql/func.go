@@ -13,7 +13,7 @@ import (
 	"github.com/zhiyunliu/golibs/xtypes"
 )
 
-type ColTypeCallback func(*model.TmplCol) string
+type ColCallback func(*model.TmplCol) string
 
 var (
 	funcMap = template.FuncMap{}
@@ -28,10 +28,24 @@ var (
 		"是": "NULL",
 	}
 
-	defaultMap = xtypes.XMap{
+	colDefaultValMap = xtypes.SMap{
 		"sysdate":           "getdate()",
 		"current_timestamp": "getdate()",
 		"now()":             "getdate()",
+		"getdate()":         "getdate()",
+	}
+
+	colTxtFuncMap = map[string]ColCallback{
+		`^varchar\((\d+)\)$`:   colTextDefault,
+		`^varchar2\((\d+)\)$`:  colTextDefault,
+		`^nvarchar2\((\d+)\)$`: colTextDefault,
+		`^date$`:               colTextDefault,
+		`^datetime$`:           colTextDefault,
+		`^timestamp$`:          colTextDefault,
+		`^string$`:             colTextDefault,
+		`^text$`:               colTextDefault,
+		`^longtext$`:           colTextDefault,
+		`^clob$`:               colTextDefault,
 	}
 
 	colTypeMap = map[string]string{
@@ -90,28 +104,6 @@ func init() {
 	}
 
 	funcMap["defaultValue"] = func(col *model.TmplCol) string {
-		col.Default = strings.TrimSpace(col.Default)
-
-		if strings.EqualFold(col.Default, "") {
-			return ""
-		}
-		newVal := defaultMap.GetString(col.Default)
-		if newVal == "" {
-			newVal = col.Default
-		}
-
-		switch col.ColType {
-		case "varchar":
-			fallthrough
-		case "nvarchar":
-			newVal = fmt.Sprintf("'%s'", newVal)
-		default:
-		}
-
-		return fmt.Sprintf(" default %s", newVal)
-	}
-
-	funcMap["defaultValue"] = func(col *model.TmplCol) string {
 		newVal := colDefaultVal(col)
 		return fmt.Sprintf(" default %s", newVal)
 	}
@@ -126,10 +118,7 @@ func init() {
 	}
 
 	funcMap["generatePK"] = func(tbl *model.TmplTable) string {
-		tmpl := `CONSTRAINT @{Name} PRIMARY KEY CLUSTERED (
-		@{PkCols}
-) 
-`
+		tmpl := `CONSTRAINT @{Name} PRIMARY KEY CLUSTERED (	@{PkCols} ) `
 
 		pks := tbl.GetPks()
 		if pks == nil {
@@ -182,6 +171,7 @@ func init() {
 
 	funcMap["generateComment"] = func(tbl *model.TmplTable) string {
 		list := []string{}
+		list = append(list, tableComment(tbl))
 		for _, col := range tbl.Cols.Cols {
 			r := colComment(col)
 			list = append(list, r)
@@ -202,10 +192,6 @@ func init() {
 		return strings.EqualFold(idx.IdxType, indextype.Unq)
 	}
 
-	funcMap["indexStr"] = func(idx *model.TmplIdx) string {
-		return idx.Name
-	}
-
 	funcMap["indexCols"] = func(idx *model.TmplIdx) string {
 		list := make([]string, len(idx.Cols))
 		for i, col := range idx.Cols {
@@ -216,25 +202,39 @@ func init() {
 
 }
 
+func colTextDefault(col *model.TmplCol) string {
+	col.Default = strings.TrimSpace(col.Default)
+	if strings.EqualFold(col.Default, "") {
+		return ""
+	}
+	newVal := colDefaultValMap.Get(col.Default)
+	if newVal != "" {
+		return newVal
+	}
+
+	defaultVal := col.Default
+	defaultVal = strings.Trim(defaultVal, "'")
+	defaultVal = strings.Trim(defaultVal, `"`)
+	return fmt.Sprintf(`'%s'`, defaultVal)
+}
+
 func colDefaultVal(col *model.TmplCol) string {
 	col.Default = strings.TrimSpace(col.Default)
 
 	if strings.EqualFold(col.Default, "") {
 		return ""
 	}
-	newVal := defaultMap.GetString(col.Default)
+	newVal := colDefaultValMap.Get(col.Default)
 	if newVal == "" {
 		newVal = col.Default
 	}
 
-	switch col.ColType {
-	case "text":
-		fallthrough
-	case "varchar":
-		fallthrough
-	case "nvarchar":
-		newVal = fmt.Sprintf("'%s'", newVal)
-	default:
+	colType := col.ColType
+	for regx, v := range colTxtFuncMap {
+		reg := regexp.MustCompile(regx)
+		if reg.MatchString(colType) {
+			return v(col)
+		}
 	}
 	return newVal
 }
@@ -242,4 +242,9 @@ func colDefaultVal(col *model.TmplCol) string {
 func colComment(col *model.TmplCol) string {
 	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
 	return fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
+}
+
+func tableComment(tbl *model.TmplTable) string {
+	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=NULL,@level2name=NULL `
+	return fmt.Sprintf(tmpl, tbl.Desc, tbl.Name)
 }
