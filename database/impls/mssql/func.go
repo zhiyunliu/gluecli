@@ -11,6 +11,7 @@ import (
 	"github.com/zhiyunliu/gluecli/model"
 	"github.com/zhiyunliu/golibs/xtransform"
 	"github.com/zhiyunliu/golibs/xtypes"
+	"github.com/zhiyunliu/golibs/xtypes/igcmap"
 )
 
 type ColCallback func(*model.TmplCol) string
@@ -28,12 +29,12 @@ var (
 		"是": "NULL",
 	}
 
-	colDefaultValMap = xtypes.SMap{
+	colDefaultValMap = igcmap.New(map[string]interface{}{
 		"sysdate":           "getdate()",
 		"current_timestamp": "getdate()",
 		"now()":             "getdate()",
 		"getdate()":         "getdate()",
-	}
+	})
 
 	colTxtFuncMap = map[string]ColCallback{
 		`^varchar\((\d+)\)$`:   colTextDefault,
@@ -105,6 +106,9 @@ func init() {
 
 	funcMap["defaultValue"] = func(col *model.TmplCol) string {
 		newVal := colDefaultVal(col)
+		if newVal == "" {
+			return ""
+		}
 		return fmt.Sprintf(" default %s", newVal)
 	}
 
@@ -207,9 +211,9 @@ func colTextDefault(col *model.TmplCol) string {
 	if strings.EqualFold(col.Default, "") {
 		return ""
 	}
-	newVal := colDefaultValMap.Get(col.Default)
-	if newVal != "" {
-		return newVal
+	newVal, ok := colDefaultValMap.Get(col.Default)
+	if ok {
+		return newVal.(string)
 	}
 
 	defaultVal := col.Default
@@ -224,8 +228,8 @@ func colDefaultVal(col *model.TmplCol) string {
 	if strings.EqualFold(col.Default, "") {
 		return ""
 	}
-	newVal := colDefaultValMap.Get(col.Default)
-	if newVal == "" {
+	newVal, ok := colDefaultValMap.Get(col.Default)
+	if !ok {
 		newVal = col.Default
 	}
 
@@ -236,7 +240,7 @@ func colDefaultVal(col *model.TmplCol) string {
 			return v(col)
 		}
 	}
-	return newVal
+	return fmt.Sprint(newVal)
 }
 
 func colComment(col *model.TmplCol) string {
