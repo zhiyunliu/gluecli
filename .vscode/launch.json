@@ -10,7 +10,9 @@
             "request": "launch",
             "mode": "auto",
             "program": "${fileDirname}",
-            "args": ["db", "create", "-f", "./docs/sample.md","-o" ,"./docs/", "-db","mssql"]
+            "args": ["db", "create", "-f", "./docs/sample.md","-o" ,"./docs/", "-db","mssql","-v=true"]
+            //"args":["db", "diff", "-db","mssql", "-fa" ,"./docs/sample.md", "-fb","./docs/sample2.md", "-o", "./docs"]
+            
         }
     ]
 }

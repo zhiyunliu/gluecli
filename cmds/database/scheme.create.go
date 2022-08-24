@@ -30,9 +30,9 @@ func buildSchemeCreateCmd() cli.Command {
 			return createScheme(ctx, opts)
 		},
 		Flags: []cli.Flag{
+			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "file,f", Destination: &opts.MdFilePath, Usage: `-md文件`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Value: ".", Usage: `-输出路径`},
-			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "table,t", Destination: &opts.TableName, Usage: `-表名称`},
 			cli.BoolFlag{Name: "drop,d", Destination: &opts.IncludeDrop, Usage: `-包含表删除语句`},
 			cli.BoolFlag{Name: "seqfile,s", Destination: &opts.IncludeSeqFile, Usage: `-包含序列文件`},
@@ -70,7 +70,6 @@ func createScheme(c *cli.Context, opts *schemeCreateOptions) (err error) {
 	for _, tb := range tblist.Tables {
 		//创建文件
 		path := xfile.GetSchemePath(outpath, tb.Name)
-
 		//转换文件
 		content, err := database.BuildScheme(opts.DbType, tb)
 		// content, err := tmpl.Translate(tmpl.SQLTmpl, opts.DbType, tb)

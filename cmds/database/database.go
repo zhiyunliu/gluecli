@@ -19,8 +19,8 @@ func buildCommond() (cmd cli.Command) {
 	}
 	subCmds := cli.Commands{
 		buildSchemeCreateCmd(),
-		//buildSchemeDiffCmd(),
-		//	buildSchemeDicCmd(),
+		buildSchemeDiffCmd(),
+		buildSchemeDicCmd(),
 	}
 	cmd.Subcommands = subCmds
 	return

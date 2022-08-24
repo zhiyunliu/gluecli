@@ -3,6 +3,7 @@ package model
 import (
 	"strings"
 
+	"github.com/zhiyunliu/gluecli/consts/enums/difftype"
 	"github.com/zhiyunliu/gluecli/consts/enums/indextype"
 )
 
@@ -12,12 +13,16 @@ type TmplTable struct {
 	Desc    string    //表描述
 	ExtInfo string    //扩展信息
 	Cols    *TmplCols //原始列
-	Indexs  *TmplIdxs //索引
+	indexs  *TmplIdxs //索引
 
 	//********************
 	DropTable bool //生成删除语句
 	Exclude   bool //排除生成sql
 
+	//********************
+	Operation difftype.Operation
+	DiffCols  []*TmplCol
+	DiffIdxs  []*TmplIdx
 }
 
 //NewTable 创建表
@@ -43,55 +48,51 @@ func (t *TmplTable) GetCol(idx int) *TmplCol {
 
 func (tc *TmplTable) GetPks() *TmplIdx {
 	idxs := tc.GetIdxs()
-	for _, v := range idxs.Map {
-		if v.IdxType == indextype.PK {
-			return v
-		}
+	for _, v := range idxs.GetIdxTypeList(indextype.PK) {
+		return v
 	}
 	return nil
 }
 
 func (tc *TmplTable) GetIdxs() *TmplIdxs {
-	if tc.Indexs != nil {
-		return tc.Indexs
+	if tc.indexs != nil {
+		return tc.indexs
 	}
-	tblIdx := &TmplIdxs{
-		Table: tc,
-		Map:   map[string]*TmplIdx{},
-	}
-	tc.Indexs = tblIdx
+	tblIdx := NewTmplIdxs(tc)
+	tc.indexs = tblIdx
 
 	for _, col := range tc.Cols.Cols {
 		//处理PK
 		for k, v := range col.GetPK() {
-			idx, ok := tblIdx.Map[k]
+			idx, ok := tblIdx.GetIdx(k)
 			if !ok {
-				idx = &TmplIdx{Table: tc, IdxType: indextype.PK, Name: k, Cols: tmplIdxColList{}}
-				tblIdx.Map[k] = idx
+				idx = &TmplIdx{IdxType: indextype.PK, Name: k}
+				tblIdx.Append(idx)
 			}
 			idx.Cols = append(idx.Cols, tmplIdxCol{ColName: col.ColName, Sort: v})
 		}
 
 		//处理Idx
 		for k, v := range col.GetIdxs() {
-			idx, ok := tblIdx.Map[k]
+			idx, ok := tblIdx.GetIdx(k)
 			if !ok {
-				idx = &TmplIdx{Table: tc, IdxType: indextype.Idx, Name: k}
-				tblIdx.Map[k] = idx
+				idx = &TmplIdx{IdxType: indextype.Idx, Name: k}
+				tblIdx.Append(idx)
 			}
 			idx.Cols = append(idx.Cols, tmplIdxCol{ColName: col.ColName, Sort: v})
 		}
 
 		//处理UNQ
 		for k, v := range col.GetUnq() {
-			idx, ok := tblIdx.Map[k]
+			idx, ok := tblIdx.GetIdx(k)
 			if !ok {
-				idx = &TmplIdx{Table: tc, IdxType: indextype.Unq, Name: k}
-				tblIdx.Map[k] = idx
+				idx = &TmplIdx{IdxType: indextype.Unq, Name: k}
+				tblIdx.Append(idx)
 			}
 			idx.Cols = append(idx.Cols, tmplIdxCol{ColName: col.ColName, Sort: v})
 		}
 	}
-	tblIdx.Sort()
+	tblIdx.SortCols()
+
 	return tblIdx
 }

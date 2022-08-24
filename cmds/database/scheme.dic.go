@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 
 	"github.com/urfave/cli"
+	"github.com/zhiyunliu/gluecli/consts/enums/dbtype"
+	"github.com/zhiyunliu/gluecli/consts/enums/tmpltype"
 	"github.com/zhiyunliu/gluecli/database"
 	"github.com/zhiyunliu/gluecli/logs"
 	"github.com/zhiyunliu/gluecli/template"
@@ -21,7 +23,9 @@ type schemeDicOptions struct {
 }
 
 func buildSchemeDicCmd() cli.Command {
-	opts := &schemeDicOptions{}
+	opts := &schemeDicOptions{
+		DbType: "",
+	}
 	cmd := cli.Command{
 		Name:  "file",
 		Usage: "根据数据库生成文件",
@@ -31,9 +35,9 @@ func buildSchemeDicCmd() cli.Command {
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "dbconn,dc", Destination: &opts.DbConn, Usage: `-md文件`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},
-			cli.StringFlag{Name: "dbtype,dt", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
+			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Value: dbtype.MsSql, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "table,t", Destination: &opts.TableName, Usage: `-表名称`},
-			cli.StringFlag{Name: "tmpl,tpl", Destination: &opts.TmplType, Usage: `-数据文件类型(md/doc/docx)`},
+			cli.StringFlag{Name: "tmpl,tpl", Destination: &opts.TmplType, Value: tmpltype.Markdown, Usage: `-数据文件类型(md/doc/docx)`},
 			cli.BoolFlag{Name: "cover,v", Destination: &opts.NeedCoverFile, Usage: `-文件存在时覆盖`},
 		},
 	}
@@ -47,37 +51,22 @@ func dicScheme(c *cli.Context, opts *schemeDicOptions) (err error) {
 		return
 	}
 
-	//循环创建表
-	content := ""
-	for _, tb := range dbInfo.Tables {
-		//翻译文件
-		ct, err := template.Translate(opts.TmplType, opts.DbType, tb)
-		if err != nil {
-			return err
-		}
-		content += ct
-	}
-
 	//生成文件
-	path := filepath.Join(opts.OutputPath, fmt.Sprintf("./%s.md", opts.DbType))
+	path := filepath.Join(opts.OutputPath, fmt.Sprintf("./%s.%s", opts.DbType, opts.TmplType))
+	logs.Info("生成文件:", path, opts.NeedCoverFile)
 	fs, err := xfile.Create(path, opts.NeedCoverFile)
 	if err != nil {
 		return err
 	}
-	logs.Info("生成文件:", path)
-	fs.WriteString(content)
-	fs.Close()
+	defer fs.Close()
+
+	for _, tbl := range dbInfo.Tables {
+		//翻译文件
+		err := template.Translate(fs, opts.TmplType, opts.DbType, tbl)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
-
-const MdDictionaryTPL = `
-{{ $empty := "" -}}
-###  {{.Desc}}[{{.Name}}]
-
-| 字段名       | 类型       | 默认值  | 为空 |   约束    | 描述                                |
-| ------------| -----------| :----: | :--: | :-------: | :---------------------------------|
-{{range $i,$c:=.Rows -}}
-| {{$c.Name}} | {{$c.Type}}{{if ne $c.LenStr $empty}}({{$c.LenStr}}){{end}}|{{$c.Def}}|{{$c|isMDNull}}| {{$c.Con}} | {{$c.Desc}}|
-{{end -}}
-`

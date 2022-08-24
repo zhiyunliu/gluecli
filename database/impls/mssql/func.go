@@ -13,7 +13,7 @@ import (
 	"github.com/zhiyunliu/golibs/xtypes"
 )
 
-type ColTypeCallback func(*model.TmplCol) string
+type ColCallback func(*model.TmplCol) string
 
 var (
 	funcMap = template.FuncMap{}
@@ -28,10 +28,24 @@ var (
 		"是": "NULL",
 	}
 
-	defaultMap = xtypes.XMap{
+	colDefaultValMap = xtypes.SMap{
 		"sysdate":           "getdate()",
 		"current_timestamp": "getdate()",
 		"now()":             "getdate()",
+		"getdate()":         "getdate()",
+	}
+
+	colTxtFuncMap = map[string]ColCallback{
+		`^varchar\((\d+)\)$`:   colTextDefault,
+		`^varchar2\((\d+)\)$`:  colTextDefault,
+		`^nvarchar2\((\d+)\)$`: colTextDefault,
+		`^date$`:               colTextDefault,
+		`^datetime$`:           colTextDefault,
+		`^timestamp$`:          colTextDefault,
+		`^string$`:             colTextDefault,
+		`^text$`:               colTextDefault,
+		`^longtext$`:           colTextDefault,
+		`^clob$`:               colTextDefault,
 	}
 
 	colTypeMap = map[string]string{
@@ -72,7 +86,6 @@ func init() {
 					return v
 				}
 				value := reg.FindStringSubmatch(colType)
-				fmt.Printf("%s:%s[%s]\n", col.ColName, colType, strings.Join(value, "|"))
 				if len(value) > 1 {
 					return strings.Replace(v, "*", strings.Join(value[1:], ","), -1)
 				}
@@ -82,26 +95,22 @@ func init() {
 		return colType
 	}
 
-	funcMap["defaultValue"] = func(col *model.TmplCol) string {
-		col.Default = strings.TrimSpace(col.Default)
-
-		if strings.EqualFold(col.Default, "") {
+	funcMap["seq"] = func(col *model.TmplCol) string {
+		seqV := col.GetSeq()
+		if seqV == nil {
 			return ""
 		}
-		newVal := defaultMap.GetString(col.Default)
-		if newVal == "" {
-			newVal = col.Default
-		}
+		return fmt.Sprintf(" IDENTITY(%s,%s)", seqV.K, seqV.V)
+	}
 
-		switch col.ColType {
-		case "varchar":
-			fallthrough
-		case "nvarchar":
-			newVal = fmt.Sprintf("'%s'", newVal)
-		default:
-		}
-
+	funcMap["defaultValue"] = func(col *model.TmplCol) string {
+		newVal := colDefaultVal(col)
 		return fmt.Sprintf(" default %s", newVal)
+	}
+
+	funcMap["alterDefaultValue"] = func(col *model.TmplCol) string {
+		newVal := colDefaultVal(col)
+		return newVal
 	}
 
 	funcMap["isNull"] = func(col *model.TmplCol) string {
@@ -109,12 +118,7 @@ func init() {
 	}
 
 	funcMap["generatePK"] = func(tbl *model.TmplTable) string {
-		tmpl := `
-CONSTRAINT @{Name} PRIMARY KEY CLUSTERED 
-(
-	@{PkCols}
-) 
-`
+		tmpl := `CONSTRAINT @{Name} PRIMARY KEY CLUSTERED (	@{PkCols} ) `
 
 		pks := tbl.GetPks()
 		if pks == nil {
@@ -128,7 +132,7 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 		}
 
 		result := xtransform.Translate(tmpl, map[string]interface{}{
-			"Name":   tbl.Name,
+			"Name":   pks.Name,
 			"PkCols": strings.Join(pkslist, ","),
 		})
 
@@ -142,12 +146,12 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 
 		list := []string{}
 
-		for k, v := range idxs.Map {
+		for _, v := range idxs.GetIdxList() {
 			if strings.EqualFold(v.IdxType, indextype.PK) {
 				continue
 			}
 			param := map[string]interface{}{
-				"idx_name":   k,
+				"idx_name":   v.Name,
 				"table_name": tbl.Name,
 			}
 			if strings.EqualFold(v.IdxType, indextype.Unq) {
@@ -166,12 +170,81 @@ CONSTRAINT @{Name} PRIMARY KEY CLUSTERED
 	}
 
 	funcMap["generateComment"] = func(tbl *model.TmplTable) string {
-		tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
 		list := []string{}
+		list = append(list, tableComment(tbl))
 		for _, col := range tbl.Cols.Cols {
-			r := fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
+			r := colComment(col)
 			list = append(list, r)
 		}
 		return strings.Join(list, "\r\n")
 	}
+
+	funcMap["colComment"] = colComment
+
+	//idx
+	funcMap["isPk"] = func(idx *model.TmplIdx) bool {
+		return strings.EqualFold(idx.IdxType, indextype.PK)
+	}
+	funcMap["isIDX"] = func(idx *model.TmplIdx) bool {
+		return strings.EqualFold(idx.IdxType, indextype.Idx)
+	}
+	funcMap["isUNQ"] = func(idx *model.TmplIdx) bool {
+		return strings.EqualFold(idx.IdxType, indextype.Unq)
+	}
+
+	funcMap["indexCols"] = func(idx *model.TmplIdx) string {
+		list := make([]string, len(idx.Cols))
+		for i, col := range idx.Cols {
+			list[i] = fmt.Sprintf("%s ASC", col.ColName)
+		}
+		return strings.Join(list, ",")
+	}
+
+}
+
+func colTextDefault(col *model.TmplCol) string {
+	col.Default = strings.TrimSpace(col.Default)
+	if strings.EqualFold(col.Default, "") {
+		return ""
+	}
+	newVal := colDefaultValMap.Get(col.Default)
+	if newVal != "" {
+		return newVal
+	}
+
+	defaultVal := col.Default
+	defaultVal = strings.Trim(defaultVal, "'")
+	defaultVal = strings.Trim(defaultVal, `"`)
+	return fmt.Sprintf(`'%s'`, defaultVal)
+}
+
+func colDefaultVal(col *model.TmplCol) string {
+	col.Default = strings.TrimSpace(col.Default)
+
+	if strings.EqualFold(col.Default, "") {
+		return ""
+	}
+	newVal := colDefaultValMap.Get(col.Default)
+	if newVal == "" {
+		newVal = col.Default
+	}
+
+	colType := col.ColType
+	for regx, v := range colTxtFuncMap {
+		reg := regexp.MustCompile(regx)
+		if reg.MatchString(colType) {
+			return v(col)
+		}
+	}
+	return newVal
+}
+
+func colComment(col *model.TmplCol) string {
+	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
+	return fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
+}
+
+func tableComment(tbl *model.TmplTable) string {
+	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=NULL,@level2name=NULL `
+	return fmt.Sprintf(tmpl, tbl.Desc, tbl.Name)
 }

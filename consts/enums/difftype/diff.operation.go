@@ -1,4 +1,4 @@
-package diffoeration
+package difftype
 
 // Operation defines the operation of a diff item.
 type Operation int8
