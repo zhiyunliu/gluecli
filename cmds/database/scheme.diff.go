@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/urfave/cli"
+	"github.com/zhiyunliu/gluecli/consts/enums/difffrom"
 	"github.com/zhiyunliu/gluecli/database"
 	"github.com/zhiyunliu/gluecli/logs"
 	"github.com/zhiyunliu/gluecli/template"
@@ -12,6 +13,7 @@ import (
 
 type schemeDiffOptions struct {
 	DbType        string
+	From          string //file,server
 	MdFilePathA   string
 	MdFilePathB   string
 	OutputPath    string
@@ -29,6 +31,7 @@ func buildSchemeDiffCmd() cli.Command {
 		},
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
+			cli.StringFlag{Name: "from", Destination: &opts.From, Value: difffrom.File, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "filesrc,fa", Destination: &opts.MdFilePathA, Usage: `-src文件`},
 			cli.StringFlag{Name: "filedest,fb", Destination: &opts.MdFilePathB, Usage: `-dest文件`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},
@@ -42,7 +45,7 @@ func buildSchemeDiffCmd() cli.Command {
 //createDiff 生成数据库结构
 func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 	if opts.MdFilePathA == "" || opts.MdFilePathB == "" {
-		return fmt.Errorf("未指定需要对比的源md文件或目标md文件. --fa,--fb")
+		return fmt.Errorf("未指定需要对比的源. --fa,--fb")
 	}
 
 	targetTbs, err := template.ReadPath(opts.MdFilePathA)
@@ -86,4 +89,8 @@ func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 		}
 	}
 	return nil
+}
+
+func getDiffTableData() {
+
 }

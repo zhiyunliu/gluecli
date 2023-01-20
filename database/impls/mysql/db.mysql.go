@@ -19,7 +19,7 @@ func (db *dbMysql) DbType() string {
 	return DbType
 }
 
-func (db *dbMysql) GetDbInfo(args ...interface{}) (dbInfo *model.DbInfo, err error) {
+func (db *dbMysql) GetDbInfo(args ...interface{}) (dbInfo *model.TmplTableList, err error) {
 	return
 }
 func (db *dbMysql) BuildScheme(tbl *model.TmplTable) (content string, err error) {

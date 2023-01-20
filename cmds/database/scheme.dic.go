@@ -33,7 +33,7 @@ func buildSchemeDicCmd() cli.Command {
 			return dicScheme(ctx, opts)
 		},
 		Flags: []cli.Flag{
-			cli.StringFlag{Name: "dbconn,dc", Destination: &opts.DbConn, Usage: `-md文件`},
+			cli.StringFlag{Name: "dbconn,dc", Destination: &opts.DbConn, Usage: `-数据库连接`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},
 			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Value: dbtype.MsSql, Usage: `-数据库类型(mysql,mssql,oracle)`},
 			cli.StringFlag{Name: "table,t", Destination: &opts.TableName, Usage: `-表名称`},

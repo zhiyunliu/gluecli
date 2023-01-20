@@ -18,9 +18,9 @@ func buildCommond() (cmd cli.Command) {
 		Usage: "数据库结构文件",
 	}
 	subCmds := cli.Commands{
-		buildSchemeCreateCmd(),
-		buildSchemeDiffCmd(),
-		buildSchemeDicCmd(),
+		buildSchemeCreateCmd(), //db create
+		buildSchemeDiffCmd(),   //db diff
+		buildSchemeDicCmd(),    //db file
 	}
 	cmd.Subcommands = subCmds
 	return

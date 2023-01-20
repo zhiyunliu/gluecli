@@ -13,7 +13,7 @@ var (
 
 type DbImpl interface {
 	DbType() string
-	GetDbInfo(args ...interface{}) (*model.DbInfo, error)
+	GetDbInfo(args ...interface{}) (*model.TmplTableList, error)
 	BuildScheme(tbl *model.TmplTable) (content string, err error)
 	Diff(tbl *model.TmplTable) (content string, err error)
 }

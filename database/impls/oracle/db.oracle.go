@@ -20,7 +20,7 @@ func (db *dbOracle) DbType() string {
 	return DbType
 }
 
-func (db *dbOracle) GetDbInfo(args ...interface{}) (dbInfo *model.DbInfo, err error) {
+func (db *dbOracle) GetDbInfo(args ...interface{}) (dbInfo *model.TmplTableList, err error) {
 	return
 }
 func (db *dbOracle) BuildScheme(tbl *model.TmplTable) (content string, err error) {

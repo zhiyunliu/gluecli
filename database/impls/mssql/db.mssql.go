@@ -24,7 +24,7 @@ func (db *dbMssql) DbType() string {
 	return DbType
 }
 
-func (db *dbMssql) GetDbInfo(args ...interface{}) (dbInfo *model.DbInfo, err error) {
+func (db *dbMssql) GetDbInfo(args ...interface{}) (dbInfo *model.TmplTableList, err error) {
 
 	return
 }

@@ -22,13 +22,13 @@ func getfuncs(dbtype string) map[string]interface{} {
 }
 
 func fillFuncMap(dbtype string, funcMap template.FuncMap) {
-	funcMap["dbcolType"] = func(col *model.DbColInfo) string {
+	funcMap["dbcolType"] = func(col *model.TmplCol) string {
 		return ""
 	}
-	funcMap["isNull"] = func(col *model.DbColInfo) string {
+	funcMap["isNull"] = func(col *model.TmplCol) string {
 		return ""
 	}
-	funcMap["colCondition"] = func(col *model.DbColInfo) string {
+	funcMap["colCondition"] = func(col *model.TmplCol) string {
 		return ""
 	}
 

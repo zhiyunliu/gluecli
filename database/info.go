@@ -9,7 +9,7 @@ import (
 	_ "github.com/zhiyunliu/gluecli/database/impls/oracle"
 )
 
-func GetDbInfo(dbType string, args ...interface{}) (info *model.DbInfo, err error) {
+func GetDbInfo(dbType string, args ...interface{}) (info *model.TmplTableList, err error) {
 	dbImpl, err := define.Load(dbType)
 	if err != nil {
 		return
