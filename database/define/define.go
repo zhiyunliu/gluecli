@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	contribxdb "github.com/zhiyunliu/glue/contrib/xdb"
+	"github.com/zhiyunliu/glue/xdb"
 	"github.com/zhiyunliu/gluecli/model"
 )
 
@@ -44,4 +46,11 @@ func Load(dbType string) (dbImpl DbImpl, err error) {
 		return
 	}
 	return dbImpl, nil
+}
+
+func GetDbInstance(proto string, conn string) (instance xdb.IDB, err error) {
+	return contribxdb.NewDB(proto, &contribxdb.Config{
+		Proto: proto,
+		Conn:  conn,
+	})
 }

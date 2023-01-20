@@ -2,11 +2,13 @@ package database
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/urfave/cli"
 	"github.com/zhiyunliu/gluecli/consts/enums/difffrom"
 	"github.com/zhiyunliu/gluecli/database"
 	"github.com/zhiyunliu/gluecli/logs"
+	"github.com/zhiyunliu/gluecli/model"
 	"github.com/zhiyunliu/gluecli/template"
 	"github.com/zhiyunliu/gluecli/xfile"
 )
@@ -48,11 +50,11 @@ func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 		return fmt.Errorf("未指定需要对比的源. --fa,--fb")
 	}
 
-	targetTbs, err := template.ReadPath(opts.MdFilePathA)
+	targetTbs, err := getTableList(opts, opts.MdFilePathA)
 	if err != nil {
 		return err
 	}
-	sourceTbs, err := template.ReadPath(opts.MdFilePathB)
+	sourceTbs, err := getTableList(opts, opts.MdFilePathB)
 	if err != nil {
 		return err
 	}
@@ -91,6 +93,13 @@ func createDiff(c *cli.Context, opts *schemeDiffOptions) (err error) {
 	return nil
 }
 
-func getDiffTableData() {
-
+func getTableList(opts *schemeDiffOptions, data string) (tbList *model.TmplTableList, err error) {
+	if strings.EqualFold(opts.From, difffrom.File) {
+		return template.ReadPath(data)
+	}
+	if strings.EqualFold(opts.From, difffrom.Server) {
+		return database.GetDbInfo(opts.DbType, data, opts.TableName)
+	}
+	err = fmt.Errorf("from不正确(file,server)")
+	return
 }

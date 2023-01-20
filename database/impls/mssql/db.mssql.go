@@ -5,6 +5,8 @@ import (
 	"strings"
 	"text/template"
 
+	_ "github.com/microsoft/go-mssqldb"
+
 	"github.com/zhiyunliu/gluecli/database/define"
 	"github.com/zhiyunliu/gluecli/model"
 )
@@ -22,11 +24,6 @@ type dbMssql struct{}
 
 func (db *dbMssql) DbType() string {
 	return DbType
-}
-
-func (db *dbMssql) GetDbInfo(args ...interface{}) (dbInfo *model.TmplTableList, err error) {
-
-	return
 }
 
 func (db *dbMssql) BuildScheme(tbl *model.TmplTable) (content string, err error) {
