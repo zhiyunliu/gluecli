@@ -46,7 +46,7 @@ func buildSchemeDicCmd() cli.Command {
 
 func dicScheme(c *cli.Context, opts *schemeDicOptions) (err error) {
 
-	dbInfo, err := database.GetDbInfo(opts.DbType, opts.DbConn)
+	dbInfo, err := database.GetDbInfo(opts.DbType, opts.DbConn, opts.TableName)
 	if err != nil {
 		return
 	}

@@ -33,7 +33,7 @@ func buildSchemeDiffCmd() cli.Command {
 		},
 		Flags: []cli.Flag{
 			cli.StringFlag{Name: "dbtype,db", Destination: &opts.DbType, Usage: `-数据库类型(mysql,mssql,oracle)`},
-			cli.StringFlag{Name: "from", Destination: &opts.From, Value: difffrom.File, Usage: `-数据库类型(mysql,mssql,oracle)`},
+			cli.StringFlag{Name: "from,fm", Destination: &opts.From, Value: difffrom.File, Usage: `-数据来源(file,server)`},
 			cli.StringFlag{Name: "filesrc,fa", Destination: &opts.MdFilePathA, Usage: `-src文件`},
 			cli.StringFlag{Name: "filedest,fb", Destination: &opts.MdFilePathB, Usage: `-dest文件`},
 			cli.StringFlag{Name: "out,o", Destination: &opts.OutputPath, Usage: `-输出路径`},

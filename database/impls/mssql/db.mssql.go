@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/microsoft/go-mssqldb"
 
+	"github.com/zhiyunliu/gluecli/consts/enums/difftype"
 	"github.com/zhiyunliu/gluecli/database/define"
 	"github.com/zhiyunliu/gluecli/model"
 )
@@ -40,7 +41,15 @@ func (db *dbMssql) BuildScheme(tbl *model.TmplTable) (content string, err error)
 }
 func (db *dbMssql) Diff(tbl *model.TmplTable) (content string, err error) {
 	var tmpl = template.New("table").Funcs(funcMap)
-	np, err := tmpl.Parse(TmplDiffSQLModify)
+	txtTmpl := TmplDiffSQLModify
+	if tbl.Operation == difftype.Delete {
+		txtTmpl = TmplDropTable
+	}
+	if tbl.Operation == difftype.Insert {
+		txtTmpl = TmplCreateTable
+	}
+
+	np, err := tmpl.Parse(txtTmpl)
 	if err != nil {
 		return "", err
 	}

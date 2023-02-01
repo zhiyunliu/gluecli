@@ -30,14 +30,14 @@ go
 
 const TmplDiffSQLModify = `
 {{ $empty := "" -}}
-
+  
 {{- range $i,$c:=.DiffCols}}
 {{- if (eq $c.Operation -1)}}
 -- 删除字段 {{$c.ColName}} 
 ALTER TABLE {{$.Name}} drop COLUMN {{$c.ColName}};
 {{- else if (eq $c.Operation 1)}}
 -- 新增字段 {{$c.ColName}} 
-ALTER TABLE {{$.Name}} add COLUMN {{$c.ColName}} {{$c|dbcolType}} {{$c|seq}}  {{$c|isNull}} {{$c|defaultValue}}  ;
+ALTER TABLE {{$.Name}} add  {{$c.ColName}} {{$c|dbcolType}} {{$c|seq}}  {{$c|isNull}} {{$c|defaultValue}}  ;
 {{$c|colComment}}
 {{- else if (eq $c.Operation 2)}}
 -- 修改字段 {{$c.ColName}} 
@@ -81,5 +81,11 @@ DROP INDEX {{$c.Name}} ON  {{$.Name}};
 CREATE UNIQUE NONCLUSTERED INDEX {{$c.Name}} ON {{$.Name}} ({{$c|indexCols}});
 
 {{- end}}
+{{- end}}
+`
+
+const TmplDropTable = `
+{{- if (eq $.Operation -1)}}
+DROP TABLE {{$.Name}};
 {{- end}}
 `

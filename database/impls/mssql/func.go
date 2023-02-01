@@ -244,11 +244,17 @@ func colDefaultVal(col *model.TmplCol) string {
 }
 
 func colComment(col *model.TmplCol) string {
+	if len(strings.TrimSpace(col.Comment)) <= 0 {
+		return ""
+	}
 	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=N'COLUMN',@level2name=N'%s'`
 	return fmt.Sprintf(tmpl, col.Comment, col.Table.Name, col.ColName)
 }
 
 func tableComment(tbl *model.TmplTable) string {
+	if len(strings.TrimSpace(tbl.Desc)) <= 0 {
+		return ""
+	}
 	tmpl := `EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'%s' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'%s', @level2type=NULL,@level2name=NULL `
 	return fmt.Sprintf(tmpl, tbl.Desc, tbl.Name)
 }

@@ -9,10 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}",
-            "args": ["db", "create", "-f", "./docs/sample.md","-o" ,"./docs/", "-db","mssql","-v=true"]
+            "program": "main.go",
+            //"args": ["db", "create", "-f", "./docs/sample.md","-o" ,"./docs/", "-db","mssql","-v=true"]
             //"args":["db", "diff", "-db","mssql", "-fa" ,"./docs/sample.md", "-fb","./docs/sample2.md", "-o", "./docs"]
-            
+            "args":["db","diff", "--from=server", "--db=mssql", "--fb=server=47.108.170.71;database=xunyouuser;user id=xy;password=xycs_20211220;" ,"--fa=server=119.6.97.53;database=xunyouuser;user id=xy;password=LAM$13CT808^p#you.data;", "-o=./","-t=test_diff"]
         }
     ]
 }

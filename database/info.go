@@ -14,7 +14,7 @@ func GetDbInfo(dbType string, args ...interface{}) (info *model.TmplTableList, e
 	if err != nil {
 		return
 	}
-	info, err = dbImpl.GetDbInfo(args)
+	info, err = dbImpl.GetDbInfo(args...)
 	return
 }
 
